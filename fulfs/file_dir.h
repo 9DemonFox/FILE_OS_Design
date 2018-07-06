@@ -29,7 +29,7 @@ bool fulfs_symlink(device_handle_t device, fulfs_filesystem_t* fs, const char* s
 bool fulfs_readlink(device_handle_t device, fulfs_filesystem_t* fs, const char *path, char *buf, size_t size);
 
 bool fulfs_stat(device_handle_t device, fulfs_filesystem_t* fs, const char *path, struct fs_stat *buf);
-
+//文件统计信息 设备号 fulfs系统结构体 路径 返回文件系统值
 
 typedef struct {
     base_file_t base_file;

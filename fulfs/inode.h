@@ -10,22 +10,23 @@
 
 
 /* 如果INODE_MAX_COUNT是inode_no_t的最大值的话，uint16_t的 i < INODE_MAX_COUNT永真，所以为了方便减一 */
-#define INODE_MAX_COUNT (UINT16_MAX - 1)
+#define INODE_MAX_COUNT (UINT16_MAX - 1)//最大值
 
 typedef struct {
     device_handle_t device;
+//device句柄,暂时int
     size_t block_size;
     block_no_t start;
     block_no_t size;
 }dev_inode_ctrl_t;
-
+//设备的i节点控制类型 设备号 设备块大小 起始块 块大小 块数目
 #define LEVEL_0_INDIRECT_COUNT 10
 typedef struct
 {
     uint16_t mode;
     uint16_t link_count;
     uint64_t size;
-    block_no_t blocks[LEVEL_0_INDIRECT_COUNT];
+    block_no_t blocks[LEVEL_0_INDIRECT_COUNT];//1级索引10块
     block_no_t single_indirect_block;
     block_no_t double_indirect_block;
     block_no_t triple_indirect_block;
@@ -33,13 +34,14 @@ typedef struct
     timestamp_t modified_time;
     timestamp_t created_time;
 }inode_t;
+//i节点基本信息 
 
 enum {
     MODE_EMPTY,
     MODE_FILE,
     MODE_DIR,
     MODE_SYMBOL_LINK
-};
+};//方便比较
 
 size_t inode_bin_size(void);
 

@@ -17,7 +17,7 @@
 
 #define DEVICE_IO_SUCCESS(handle) (handle >= 0)
 
-typedef int device_handle_t;
+typedef int device_handle_t;//句柄为int型
 typedef uint64_t sector_no_t;
 
 /* 将外部系统的path文件模拟成系统的一个磁盘，返回其句柄，错误则返回-1 */

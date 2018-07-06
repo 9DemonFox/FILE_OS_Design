@@ -17,10 +17,10 @@ enum {
 /* 这个表记录了盘符到具体操作系统的记录 */
 struct dev_fsctrl_s{
     int fs_type;
-    struct fs_operate_functions_s* opfuncs;
+    struct fs_operate_functions_s* opfuncs;//文件系统实现的接口
     device_handle_t device;
     fs_filesystem_t* fs_ctrl;
-};
+};//盘符--》文件系统
 
 bool fs_mount(device_handle_t device, char drive_letter, int fs_type);
 bool fs_dev_fs_ctrl(char drive_letter, struct dev_fsctrl_s* ctrl);

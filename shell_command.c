@@ -119,13 +119,13 @@ int cmd_tree(int argc, char* argv[])
 
 
 int cmd_createfile(int argc, char* argv[])
-{
+{//命令解析
     if (argc != 2) {
         printf("参数错误！\n");
         return -1;
     }
 
-    int ret = fs_stat(argv[0], NULL);
+    int ret = fs_stat(argv[0], NULL);//返回处理结果
     if(ret == FS_SUCCESS) {
         printf("已存在同名文件！\n");
         return -1;
@@ -200,8 +200,9 @@ int cmd_df(int argc, char* argv[])
     return 0;
 }
 
-/* 由大印编写 */
+
 int cmd_pwd(int argc, char* argv[])
+//输出当前目录
 {
     char path[FS_MAX_FILE_PATH];
     fs_getcwd(path, FS_MAX_FILE_PATH);
@@ -224,11 +225,14 @@ int cmd_cd(int argc, char* argv[])
 }
 
 int cmd_ls(int argc, char* argv[])
-{
+{//shell层 解析命令
 	if(argc == 0){
 		char path[FS_MAX_FILE_PATH];
 	    fs_getcwd(path,FS_MAX_FILE_PATH);
+        //全局变量（当前地址)送入path
+        //当前目录
 		FS_DIR* dir  =  fs_opendir(path);
+        //打开当权目录
     if (dir == NULL){
         printf("路径名无效\n");
         return -1;
@@ -249,7 +253,7 @@ int cmd_ls(int argc, char* argv[])
    if (dir == NULL){
 	   printf("路径名无效\n");
 	   return -1;
-   }
+   }//？
    char name[100]="no";
    for(int i = 0;name[0] != '\0';i++){
 	  fs_readdir(dir, name);
@@ -262,6 +266,7 @@ int cmd_ls(int argc, char* argv[])
 int cmd_mkdir(int argc, char* argv[])
 {
 	int a = fs_mkdir(argv[0]);
+    //命令层交付文件层处理，将建立文件路径传到文件层
 	if(a == -1){
 		printf("输入格式错误");
 		return -1;
@@ -286,7 +291,7 @@ int cmd_rmdir(int argc, char* argv[])
 }
 
 int cmd_stat(int argc, char* argv[])
-{
+{//文件信息统计结果
     if (argc != 1) {
         printf("参数错误\n");
         return -1;
@@ -326,7 +331,7 @@ int cmd_stat(int argc, char* argv[])
     return 0;
 }
 
-/* 由金举编写 */
+
 int cmd_cp(int argc, char* argv[])
 {
     int sourceFile;

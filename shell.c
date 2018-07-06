@@ -17,13 +17,14 @@ static int cmd_dispath(const char* cmd, int argc, char* argv[]);
 
 int shell_main(void)
 {
-    fs_chdir("A:/");
-    char line[MAX_LINE];
+    fs_chdir("A:/");//根目录 定为A盘 暂定为A盘 未来可改变
+    char line[MAX_LINE];//4*1024命令行最大字节数
 
-    char* argv[MAX_ARGC];
+    char* argv[MAX_ARGC];//申请参数空间
     while (true) {
-        char cd[FS_MAX_FILE_PATH];
-        fs_getcwd(cd, FS_MAX_FILE_PATH);
+        //循环检测
+        char cd[FS_MAX_FILE_PATH];//cd
+        fs_getcwd(cd, FS_MAX_FILE_PATH);//cd存放
         printf("fulfs@%s", cd);
         printf(" >>> ");
         if (fgets(line, sizeof(line) / sizeof(*line), stdin) == NULL) {
@@ -54,7 +55,7 @@ int shell_main(void)
         }
 
         if (argc > 0) {
-            cmd_dispath(argv[0], argc - 1, argv + 1);
+            cmd_dispath(argv[0], argc - 1, argv + 1);//参数解析到命令
         }
     }
 
@@ -80,13 +81,13 @@ int cmd_dispath(const char* cmd, int argc, char* argv[])
         {"stat", cmd_stat},
         {"cat", cmd_cat},
         {"df", cmd_df},
-        {"createfile", cmd_createfile},
+        {"createfile", cmd_createfile},//createfile FILENAME CONTENTS
     };
 
     for (size_t i = 0; i < sizeof(commands) / sizeof(*commands); i++) {
         if (strcmp(cmd, commands[i].name) == 0) {
             return commands[i].func(argc, argv);
-        }
+        }//对应的命令去执行
     }
 
     printf("不存在命令%s！\n", cmd);

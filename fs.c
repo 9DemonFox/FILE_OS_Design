@@ -6,19 +6,21 @@
 #include "utils/path.h"
 #include <ctype.h>
 #include <string.h>
-
+#include <stdio.h>
 #include <assert.h>
 
 
 struct fs_operate_functions_s g_operate_functions[FS_TYPE_TOTAL];
-
+//根据不同的文件类型来扩展
+//
 
 struct dev_fsctrl_s g_device_filesystem['z' - 'a' + 1];
+//声明一堆文件控制块
+//会存上吗?
 
-
-void fs_init(void)
+void fs_init(void)//文件系統初始化
 {
-    FS_OPERATE_FUNCTIONS_SET(g_operate_functions[FS_TYPE_FULFS], fulfs);
+    FS_OPERATE_FUNCTIONS_SET(g_operate_functions[FS_TYPE_FULFS], fulfs);//初始化操作集合
 
     for (int i = 0; i <= 'z' - 'a'; i++) {
         g_device_filesystem[i].fs_type = FS_TYPE_NULL;
@@ -31,7 +33,7 @@ void fs_init(void)
 
 bool fs_mount(device_handle_t device, char drive_letter, int fs_type)
 {
-    drive_letter = tolower(drive_letter);
+    drive_letter = tolower(drive_letter);//大写转小写 A->a
     if (!('a' <= drive_letter && drive_letter <= 'z')) {
         return false;
     }
@@ -76,7 +78,7 @@ bool fs_dev_fs_ctrl(char drive_letter, struct dev_fsctrl_s* ctrl)
 
 static inline  struct dev_fsctrl_s* drive_letter_to_ctrl(char letter)
 {
-    return &g_device_filesystem[tolower(letter) - 'a'];
+    return &g_device_filesystem[tolower(letter) - 'a'];//全局变量,返回
 }
 
 
@@ -85,11 +87,12 @@ static inline  struct dev_fsctrl_s* drive_letter_to_ctrl(char letter)
 static inline bool path_check(const char* path)
 {
     return isalpha(path[0]) && path[1] == ':';
+    //检测第一个为字母（盘符)第二个为:
 }
 
 static inline char path_drive_letter(const char* path)
 {
-    return path[0];
+    return path[0];//返回参数中的盘符
 }
 
 /* 去除盘符以外的部分 */
@@ -99,7 +102,10 @@ static inline const char* path_remain(const char* path)
 }
 
 static inline struct dev_fsctrl_s* path_to_ctrl(const char* path) {
-    return drive_letter_to_ctrl(path_drive_letter(path));
+    //输出文件控制块
+    //形参为路径
+    return drive_letter_to_ctrl(path_drive_letter(path));//路径中的盘符
+    //盘符到控制块
 }
 
 
@@ -113,9 +119,10 @@ struct {
 
 int fs_open(const char* path)
 {
+    printf("%s---------0\n",path);//测试
     char abspath[FS_MAX_FILE_PATH];
     fs_abs_path(path, abspath, FS_MAX_FILE_PATH);
-
+    printf("%s--------1\n",path);//测试
     if (!path_check(abspath)) {
         return FS_ERROR;
     }
@@ -187,19 +194,27 @@ fs_off_t fs_lseek(int fd, fs_off_t off, int where)
 
 
 int fs_mkdir(const char* path)
-{
+{//文件系统交付文件系统处理
+    
     char abspath[FS_MAX_FILE_PATH];
+    //绝对路径
     fs_abs_path(path, abspath, FS_MAX_FILE_PATH);
-
-    if (!path_check(abspath)) {
+    //当前路径 绝对路径 最大路径长度
+    if (!path_check(abspath)) {//绝对路径检测
         return FS_ERROR;
     }
-
+    //输出了全局的绝对路径
+    //FIXME 无法在文件目录下创建文件目录 bingo
     struct dev_fsctrl_s* ctrl = path_to_ctrl(abspath);
+    //盘符到文件的操作
+    //传入的路径带盘符的，也就决定了文件系统
     if (ctrl->opfuncs->mkdir(ctrl->device, ctrl->fs_ctrl, path_remain(abspath))) {
+        //参数 设备号 
+        //将参数传到mkdir中
+        //传入去除盘符以外的路径
         return FS_SUCCESS;
     } else {
-        return FS_ERROR;
+        return FS_ERROR;//返回格式错误
     }
 }
 
@@ -300,16 +315,23 @@ int fs_readlink(const char *path, char *buf, size_t size)
 }
 
 
+
 int fs_stat(const char *path, struct fs_stat *buf)
+//传入信息 文件路径 文件标准信息
 {
-    char abspath[FS_MAX_FILE_PATH];
+    char abspath[FS_MAX_FILE_PATH];//绝对地址
     fs_abs_path(path, abspath, FS_MAX_FILE_PATH);
 
-    if (!path_check(abspath)) {
+    if (!path_check(abspath)) {//检测第一个为盘符 第二个为:
         return FS_ERROR;
     }
     struct dev_fsctrl_s* ctrl = path_to_ctrl(abspath);
+    //j将命令层交付文件层 文件层交付fulfs层处理
+    //获取当前文件信息块
     if (ctrl->opfuncs->stat(ctrl->device, ctrl->fs_ctrl, path_remain(abspath), buf)) {
+        //path_remain保留去除盘符的路径`
+        //传入去除盘符的路径
+        // buf存放文件信息
         return FS_SUCCESS;
     } else {
         return FS_ERROR;
@@ -320,7 +342,7 @@ int fs_stat(const char *path, struct fs_stat *buf)
 struct _fs_dir_wrapper_s
 {
     fs_dir_t* dir;
-    char drive_letter;
+    char drive_letter;//盘符
 };
 
 FS_DIR* fs_opendir(const char *path)
@@ -373,8 +395,11 @@ int fs_format(device_handle_t device, int sectors_per_block, int fs_type)
     if (!(0 <= fs_type && fs_type < FS_TYPE_TOTAL)) {
         return FS_ERROR;
     }
+    //文件系统类型，未来扩展
 
     if (g_operate_functions[fs_type].format(device, sectors_per_block)) {
+        // 设备号 扇区簇数
+        //当前文件系统的初始化 参数
         return FS_SUCCESS;
     } else {
         return FS_ERROR;
@@ -401,17 +426,19 @@ fs_size_t fs_filesystem_total_size(char drive_letter)
     }
 }
 
-char g_current_dir[FS_MAX_FILE_PATH] = "";
+char g_current_dir[FS_MAX_FILE_PATH] = "";//设当前目录为全局变量
 
 char* fs_getcwd(char *buffer,size_t size)
+//传入参数 path 和size
+//返回参数*buffer
 {
     if (strlen(g_current_dir) <= 0 || size < 1) {
-        return NULL;
+        return NULL;//如果全局变量为空
     } else {
-        strncpy(buffer, g_current_dir, size - 1);
+        strncpy(buffer, g_current_dir, size - 1);//全局变量当前目录
         buffer[size - 1] = '\0';
     }
-    return buffer;
+    return buffer;//缓冲区内容，写入截支止符
 }
 
 int fs_chdir(const char* path)
@@ -437,13 +464,15 @@ int fs_chdir(const char* path)
 
 /* FIXME: 目前对于带盘符的路径的一些约定有些混乱，先暂时这样吧 */
 char* fs_abs_path(const char* path, char* abs_path, size_t size)
+//当前路径 绝对路径 路径长度
+//
 {
-    if (path[1] != ':') {
+    if (path[1] != ':') {//如果第二个是: 即出现A:
         if (fs_getcwd(abs_path, size) == NULL) {
             return NULL;
-        }
+        }//如果不是A：则把abs_path赋值为当前地址
 
-        path_join(abs_path, size, path);
+        path_join(abs_path, size, path);//将当前路径和新建文件夹合并
 
     } else {
         strncpy(abs_path, path, size - 1);
@@ -452,11 +481,13 @@ char* fs_abs_path(const char* path, char* abs_path, size_t size)
 
     path_simplify(abs_path);
 
-    assert(abs_path[1] == ':');
+    assert(abs_path[1] == ':');//断言第二个为A
 
     if (abs_path[2] == '\0' ) {
         abs_path[2] = '/';
         abs_path[3] = '\0';
     }
+   // printf("%s ------------\n",abs_path);//测试
+   //返回绝对路径
     return abs_path;
 }

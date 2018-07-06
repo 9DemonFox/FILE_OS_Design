@@ -30,7 +30,7 @@ struct fs_stat {
     long      st_ino;
     int       st_nlink;     //连到该文件的硬连接数目，刚建立的文件值为1
     int st_mode;
-    fs_off_t         st_size;      //文件字节数(文件大小)
+    fs_off_t         st_size;    //文件字节数(文件大小)
     unsigned long st_blksize;   //块大小(文件系统的I/O 缓冲区大小)
     unsigned long st_blocks;    //块数
     time_t        st_atime;     //最后一次访问时间
@@ -47,16 +47,19 @@ typedef fs_filesystem_t* (fs_filesystem_new_f)(device_handle_t device);
 
 typedef void fs_file_t;
 typedef void fs_dir_t;
-
+//返回类型 空
+//必须要实现一下接口
 typedef fs_file_t* (fs_open_f)(device_handle_t device, fs_filesystem_t* fs, const char* path);
+//打开文件
 typedef void     (fs_close_f)(fs_file_t* file);
-
+//关闭文件
 typedef int      (fs_read_f)(fs_file_t* file, char* buf, int count);
-
+//读文件
 typedef int      (fs_write_f)(fs_file_t* file, const char* buf, int count);
+//写文件
 typedef bool     (fs_ftruncate_f)(fs_file_t* file, fs_off_t size);
 typedef fs_off_t (fs_lseek_f)(fs_file_t* file, fs_off_t off, int where);
-
+//偏移地址
 typedef bool (fs_mkdir_f)(device_handle_t device, fs_filesystem_t* fs, const char* path);
 typedef bool (fs_rmdir_f)(device_handle_t device, fs_filesystem_t* fs, const char* path);
 
@@ -131,5 +134,6 @@ struct fs_operate_functions_s{
         (var).filesystem_used_size = (fs_filesystem_used_size_f*)type_name##_filesystem_used_size; \
                                                                         \
     } while(0);                                                         \
-
+//将文件系统抽象成不同的文件系统，然后通过##链接来实现这个文件系统
+//【1】从硬件到文件系统的抽象!
 #endif /* __FS__DEF__H__ */

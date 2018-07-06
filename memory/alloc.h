@@ -8,8 +8,8 @@
   目前只是对标准库的包装而已。可是万一哪天我需要更好的内存分配器呢？
 */
 
-#define FT_NEW(type_, size) ((type_ *)ft_malloc0(sizeof(type_) * size))
-
+#define FT_NEW(type_, size) ((type_ *)ft_malloc0(sizeof(type_) * size))//返回一个type—_*型的size大小的空间
+//创建一个空间
 void* ft_malloc(size_t size);
 void* ft_malloc0(size_t size);
 void* ft_realloc(void* p, size_t size);

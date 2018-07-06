@@ -117,32 +117,7 @@ bool test_format(void)
     }
 
     int device = device_add(path);
-    TEST_ASSERT(fulfs_format(device, 4 * 1024 / 512));
-
-    superblock_t sb;
-    TEST_ASSERT(superblock_load(device, &sb));
-    TEST_ASSERT(superblock_block_size(&sb) == 4 * 1024);
-    /* TEST_ASSERT(superblock_used_size(&sb) == 0); */
-    log_info("测试的文件系统data block范围:[%ld, %ld)\n", superblock_data_block_start(&sb),
-             superblock_data_block_start(&sb) + superblock_data_block_size(&sb));
-
-
-    dev_inode_ctrl_t dev_inode_ctrl;
-    dev_inode_ctrl_init_from_superblock(&dev_inode_ctrl, device, &sb);
-    inode_t inode;
-
-    TEST_ASSERT(inode_load(&dev_inode_ctrl, 0, &inode));
-    TEST_ASSERT(inode.mode == MODE_DIR);
-
-    for (inode_no_t i = 1; i < INODE_MAX_COUNT; i++) {
-        TEST_ASSERT(inode_load(&dev_inode_ctrl, i, &inode));
-        TEST_ASSERT(inode.mode == 0);
-    }
-
-
-    base_file_t base_file;
-    TEST_ASSERT(base_file_open(&base_file, device, &sb, 0));
-    TEST_ASSERT(base_file_mode(&base_file) == MODE_DIR);
+    TEST_ASSERT(fulfs_format(device, 4 * 1024 / 512));//8扇区每簇
 
     device_del(device);
     return true;
@@ -274,17 +249,18 @@ bool test_fs(void)
 int main(int argc, char *argv[])
 {
     srand(time(NULL));
-
-    TestFunc funcs[] = {
+    test_device_io();
+    //TestFunc funcs[] = {
         /* test_device_io, */
         /* test_inode_io, */
-        test_path,
-        test_format,
+        /*test_path,*/
+        /*test_format,*/
         /* test_base_block_file, */
         /* test_base_file, */
-        test_fs,
-    };
-    return test_main(funcs, sizeof(funcs) / sizeof(*funcs));
+        /*test_fs,
+    };*/
+    return 0;
+    // test_main(funcs, sizeof(funcs) / sizeof(*funcs));
 }
 
 

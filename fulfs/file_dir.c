@@ -130,16 +130,22 @@ fs_off_t fulfs_lseek(fulfs_file_t* file, fs_off_t off, int where)
 }
 
 bool fulfs_mkdir(device_handle_t device, fulfs_filesystem_t* fs, const char* path)
+//传过来的参数 设备 文件系统（超级块) 路径(除去盘符所有)
+//上层文件系统交付下层fulfs文件系统处理
+//不能创建子目录
 {
-    char dir_path[FS_MAX_FILE_PATH];
-    char name[FILE_MAX_NAME];
-    path_dirname(path, dir_path);
-    path_basename(path, name, FILE_MAX_NAME);
 
+    char dir_path[FS_MAX_FILE_PATH];//文件夹路径
+    char name[FILE_MAX_NAME];//文件名字
+    path_basename(path, name, FILE_MAX_NAME);
+    path_dirname(path, dir_path);//路径复制到文件价路径
     /* 定位出目录所在的inode */
+    /* path /test0 name test0 dir_path /*/
     bool exist;
-    inode_no_t dir_no;
+    inode_no_t dir_no;//i节点编号
+    // strcpy(dir_path,"/test");//测试
     bool success = dir_roottree_locate(device, fs, dir_path, &exist, &dir_no);
+    //参数 设备号 文件系统 文件夹路径 exsit（传回参数)  i节点编号
     if (!success) {
         return false;
     }
@@ -153,12 +159,14 @@ bool fulfs_mkdir(device_handle_t device, fulfs_filesystem_t* fs, const char* pat
     }
 
     success = base_file_create(device, &fs->sb, MODE_DIR, &file_no);
-    if (!success) {
+    if (!success) {//创建文件 传入参数： 设备号 传回superblock 文件类型 传回文件参数
         return false;
     }
-
+    
     success =  dir_add(device, fs, dir_no, name, file_no);
+    //传入设备号 文件系统信息 文件夹编号 文件夹名字 文件夹编号
     /* FIXME: 这里失败了应该要把新建立的文件删除 */
+    //并且将文件加入到文件目录
     if (!success) {
         return false;
     }
@@ -170,13 +178,15 @@ bool fulfs_rmdir(device_handle_t device, fulfs_filesystem_t* fs, const char* pat
 {
     char dir_path[FS_MAX_FILE_PATH];
     char name[FILE_MAX_NAME];
-    path_dirname(path, dir_path);
-    path_basename(path, name, FILE_MAX_NAME);
+    path_dirname(path, dir_path);//从path获得路径
+    path_basename(path, name, FILE_MAX_NAME);//从path获得姓名
 
     /* 定位出目录所在的inode */
     bool exist;
     inode_no_t parent_dir_no;
+    
     bool success = dir_roottree_locate(device, fs, dir_path, &exist, &parent_dir_no);
+    // 传入设备号 文件控制 文件夹路径名 存在标志 父亲文件夹节点的编号
     if (!success) {
         return false;
     }
@@ -229,7 +239,7 @@ bool fulfs_link(device_handle_t device, fulfs_filesystem_t* fs, const char* src_
         return false;
     }
     if (base_file_mode(&base_file) != MODE_FILE) {
-        log_warning("不能给除真正文件之外的东西做硬链接: %s, %s\n", src_path, new_path);
+        log_warning("不能给除真正文件之外的文件(一切都是文件)做硬链接: %s, %s\n", src_path, new_path);
         return false;
     }
     base_file_close(&base_file);
@@ -397,9 +407,9 @@ bool fulfs_stat(device_handle_t device, fulfs_filesystem_t* fs, const char *path
     buf->st_atime = base_file_accessed_time(&base_file);
     buf->st_mtime = base_file_modified_time(&base_file);
     buf->st_ctime = base_file_created_time(&base_file);
-
+    //传过去文件信息
     int mode = base_file_mode(&base_file);
-    if (mode == MODE_FILE) {
+    if (mode == MODE_FILE) {//文件的类型 目录 文件 快捷方式....
         buf->st_mode = FS_S_IFREG;
     } else if (mode == MODE_DIR) {
         buf->st_mode = FS_S_IFDIR;
@@ -414,9 +424,11 @@ bool fulfs_stat(device_handle_t device, fulfs_filesystem_t* fs, const char *path
 
 
 fulfs_dir_t* fulfs_opendir(device_handle_t device, fulfs_filesystem_t* fs, const char *path)
+//设备号 文件系统信息(超级块) 路径
 {
     fulfs_dir_t* dir = FT_NEW(fulfs_dir_t, 1);
-
+    // fulfs文件系统的文件夹信息
+    // 暂时只包含基本文件信息
     bool exist;
     inode_no_t no;
     bool success = dir_roottree_locate(device, fs, path, &exist, &no);
@@ -465,16 +477,19 @@ bool fulfs_closedir(fulfs_dir_t* dir)
 /*************************************/
 
 static bool dir_locate(device_handle_t device, fulfs_filesystem_t* fs, inode_no_t dir, const char* name, bool* p_exist, inode_no_t* p_no)
-{
+{//传过来的设备号 超级块 文件夹块 名字 存在标志 i节点编号
     base_file_t base_file;
     bool success = base_file_open(&base_file, device, &fs->sb, dir);
+    //传回base_file 传入设备 文件系统superBlock 以及文件夹信息存放的块即0
+    //打开当前路径的文件夹，并且返回文件信息到base_file
     if (!success) {
         return false;
     }
 
     assert(base_file_mode(&base_file) == MODE_DIR);
+    // 断言返回的是文件夹
     assert(base_file_size(&base_file) % DIR_ITEM_SIZE == 0);
-
+    //断言文件的大小是文件项的整数倍
     char buf[DIR_ITEM_SIZE];
     while (base_file_tell(&base_file) < base_file_size(&base_file)) {
         int count = base_file_read(&base_file, buf, DIR_ITEM_SIZE);
@@ -499,8 +514,11 @@ static bool dir_locate(device_handle_t device, fulfs_filesystem_t* fs, inode_no_
 }
 
 static bool dir_add(device_handle_t device, fulfs_filesystem_t* fs, inode_no_t dir, const char* name, inode_no_t no)
-{
+// 设备句柄 文件系统(超级块信息) i节点编号 文件夹名字 i节点编号
+ {
+
     assert(strlen(name) > 0);
+    //断言那么>0为真
 
     base_file_t base_file;
     bool success = base_file_open(&base_file, device, &fs->sb, dir);
@@ -508,7 +526,7 @@ static bool dir_add(device_handle_t device, fulfs_filesystem_t* fs, inode_no_t d
         return false;
     }
 
-    assert(base_file_mode(&base_file) == MODE_DIR);
+    assert(base_file_mode(&base_file) == MODE_DIR);//断言传到此处的文件类型是文件夹类型
 
     assert(base_file_size(&base_file) % DIR_ITEM_SIZE == 0);
 
@@ -609,19 +627,20 @@ static void dir_item_dump_to_bin(const struct dir_item_s* item, char* bin)
 static bool dir_tree_locate(device_handle_t device, fulfs_filesystem_t* fs, inode_no_t start, const char* relative_path, bool* p_exist, inode_no_t* p_no)
 {
     assert(relative_path[0] != '/');
-
+    //断言相对地址的第1位不为‘/’
     char name[DIR_ITEM_NAME_SIZE + 1] = {'\0'};
-
+    //文件夹名字不能超过14个字符
     int count = 0;
     for (const char* p = relative_path; *p != '\0'; p++) {
         count++;
-
         if (*(p + 1) == '/' || *(p + 1) == '\0') {
+            //找到下一级目录或者结尾
 
             bool exist;
             inode_no_t no;
             strncpy(name, (p + 1) - count, min_int(DIR_ITEM_NAME_SIZE, count));
             name[min_int(DIR_ITEM_NAME_SIZE, count)] = '\0';
+            //no当前为0
             bool success = dir_locate(device, fs, start, name, &exist, &no);
             if (!success) {
                 return false;
@@ -647,10 +666,17 @@ static bool dir_tree_locate(device_handle_t device, fulfs_filesystem_t* fs, inod
 }
 
 static bool dir_roottree_locate(device_handle_t device, fulfs_filesystem_t* fs, const char* path, bool* p_exist, inode_no_t* p_no)
-{
-    assert(path[0] == '/' || path[0] == '\0');
-    const char* relative_path = path[0] == '/' ? path + 1 : path;
-
+{//文件夹的根定位
+    //设备号 文件系统 路径 存在标志? i节点编号
+    // 根目录定位
+    assert(path[0] == '/' || path[0] == '\0');//断言path[0]==‘'‘或则’\0‘
+    //将路径转化为'/'
+    const char* relative_path = path[0] == '/' ? path + 1 : path;//如果path[0]=='/'，path+1
+    //如果开头为‘/’则把path右移一位s，否则指针右移
+    //相对路径
     return dir_tree_locate(device, fs, superblock_root_dir_inode(&fs->sb), relative_path, p_exist, p_no);
+    // 参数 设备号 文件系统 文件系统的超级块(指向的文件根目录) 相对地址 存在位 节点编号
+    //文件目录定位
+
 }
 

@@ -1,0 +1,26 @@
+{
+    "files.associations": {
+        "log.h": "c",
+        "shell.h": "c",
+        "assert.h": "c",
+        "fs.h": "c",
+        "string.h": "c",
+        "fulfs.h": "c",
+        "fs_def.h": "c",
+        "ctype.h": "c",
+        "sys.h": "c",
+        "alloc.h": "c",
+        "stdbool.h": "c",
+        "time.h": "c",
+        "stdint.h": "c",
+        "stdio.h": "c",
+        "stdarg.h": "c",
+        "device_io.h": "c",
+        "type_traits": "c",
+        "stdlib.h": "c",
+        "filesystem.h": "c",
+        "block.h": "c",
+        "superblock.h": "c",
+        "typeinfo": "c"
+    }
+}

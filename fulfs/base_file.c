@@ -17,21 +17,22 @@ static bool base_file_del(device_handle_t device, superblock_t* sb, inode_no_t i
 
 
 bool base_file_open(base_file_t* base_file, device_handle_t device, superblock_t* sb, inode_no_t inode_no)
-{
+{//打开文件块 把信息传入base_file 设备号 文件超级块 i节点编号
     base_file->device = device;
     base_file->inode_no = inode_no;
     dev_inode_ctrl_t dev_inode_ctrl;
     dev_inode_ctrl_init_from_superblock(&dev_inode_ctrl, device, sb);
     base_file->sb = sb;
     bool success = mem_inode_get(&dev_inode_ctrl, inode_no, &(base_file->mem_inode));
-    if (!success) {
+    //获取存储块的编号
+    if (!success) {//获取mem_inode
         return false;
     }
 
-    base_file->current.current_block_relative = 0;
-    base_file->current.current_offset = 0;
+    base_file->current.current_block_relative = 0;//获得块地址
+    base_file->current.current_offset = 0;//
 
-    base_file->mem_inode->inode.accessed_time = time(NULL);
+    base_file->mem_inode->inode.accessed_time = time(NULL);//访问时间更新
     return true;
 }
 
@@ -119,7 +120,7 @@ int base_file_write(base_file_t* base_file, const char* buf, int count)
     int sectors_per_block = superblock_sectors_per_block(base_file->sb);
 
     char block_buf[MAX_BYTES_PER_BLOCK];
-    int writed_count = 0;
+    int writed_count = 0;//写文件计数
     while (writed_count < count) {
 
         block_no_t current_block;
@@ -164,8 +165,8 @@ int base_file_write(base_file_t* base_file, const char* buf, int count)
         base_file_seek(base_file, will_pos);
     }
 
-    base_file->mem_inode->inode.modified_time = time(NULL);
-    return writed_count;
+    base_file->mem_inode->inode.modified_time = time(NULL);//写入修改时间
+    return writed_count;//返回写入计数
 }
 
 bool base_file_close(base_file_t* base_file)
@@ -181,6 +182,8 @@ bool base_file_close(base_file_t* base_file)
 }
 
 bool base_file_create(device_handle_t device, superblock_t* sb, int mode, inode_no_t* p_inode_no)
+//设备句柄 超级块数据结构 状态 
+//一切皆文件，文件夹也是文件
 {
     dev_inode_ctrl_t dev_inode_ctrl;
     dev_inode_ctrl_init_from_superblock(&dev_inode_ctrl, device, sb);

@@ -92,27 +92,30 @@ int format(const char* path, const char* type, int block_size)
         printf("未知的文件系统类型。。。\n");
         return ERROR;
     }
-
-    int device = device_add(path);
+    // 测试
+    int device = device_add(path);//设备号
+    printf("%d 2018年07月05日14:22:27",device);
     if (!DEVICE_IO_SUCCESS(device)) {
+        //句柄为-1则报错
         printf("设备挂载失败。。。\n");
         return ERROR;
     }
 
     int sectors_per_block = block_size / BYTES_PER_SECTOR;
+    // 扇区每簇
     if (! (0 < sectors_per_block && sectors_per_block <= 16)) {
         printf("目前只支持512的1到16倍的块大小");
         device_del(device);
         return ERROR;
     }
 
-
     if (fs_format(device, sectors_per_block, fs_type) != FS_SUCCESS) {
+        //设备号0
         printf("格式化失败。。。\n");
         device_del(device);
         return ERROR;
     } else {
-        printf("格式化成功! 块大小: %d\n", sectors_per_block * BYTES_PER_SECTOR);
+        printf("格式化成功! 块大小: %d\n", sectors_per_block * BYTES_PER_SECTOR);//扇区乘块数
         device_del(device);
         return 0;
     }
@@ -129,12 +132,15 @@ int enter(void)
     }
 
     /* 挂载设备 */
-    while (true) {
+    while (true) {//循环读入来解析配置文件
         char buf[32];
         char path[FS_MAX_FILE_PATH];
         int ret = fscanf(fp, "%s%s", buf, path);
+        //格式化读入配置文件
+        //buf存盘符：A
+        //path存放文件相对于程序位置path
         char drive_letter = buf[0];
-        if (ret == EOF || ret == 0) {
+        if (ret == EOF || ret == 0) {//解析配置文件
             break;
         }
 

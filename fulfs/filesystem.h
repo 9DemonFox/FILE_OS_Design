@@ -22,6 +22,8 @@ typedef enum {
 typedef struct {
     superblock_t sb;
 }fulfs_filesystem_t;
+//文件系统信息结构体，暂时只有超级块信息
+//未来可扩展
 
 
 fulfs_filesystem_t* fulfs_filesystem_new(device_handle_t device);

@@ -1,0 +1,5 @@
+/home/demonfox/Desktop/Git_OS/fulfs-filesystem/test/CMakeFiles/rebuild_cache.dir
+/home/demonfox/Desktop/Git_OS/fulfs-filesystem/test/CMakeFiles/test.dir
+/home/demonfox/Desktop/Git_OS/fulfs-filesystem/test/CMakeFiles/edit_cache.dir
+/home/demonfox/Desktop/Git_OS/fulfs-filesystem/test/CMakeFiles/main.dir
+/home/demonfox/Desktop/Git_OS/fulfs-filesystem/test/CMakeFiles/my_test.dir

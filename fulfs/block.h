@@ -7,7 +7,7 @@
 #include "../utils/log.h"
 
 
-#define MAX_BYTES_PER_BLOCK (8 * 2 * BYTES_PER_SECTOR)
+#define MAX_BYTES_PER_BLOCK (8 * 2 * BYTES_PER_SECTOR)//缓冲区大小为16
 
 typedef uint32_t block_no_t;
 
@@ -23,13 +23,15 @@ static inline bool block_read(device_handle_t device, int sectors_per_block, blo
 }
 
 static inline bool block_write(device_handle_t device, int sectors_per_block, block_no_t no, const char* buf)
+//参数 设备句柄 每簇的扇区数(1) 簇的编号 缓冲区
 {
     if (no == 0) {
         log_warning("写入%d号设备的0号块（可能是superblock所在块）\n", device);
     }
 
     bool success = DEVICE_IO_SUCCESS(device_write(device, no * sectors_per_block, sectors_per_block, buf));
-
+    //交由设备层处理
+    //设备号 簇×每簇的扇区数为扇区编号 每个扇区的大小 缓冲区
     if (!success) {
         log_debug("写入block失败: %d号设备, 块号%ld\n", device, no);
     }

@@ -10,7 +10,7 @@ static char* str_next(char* s, char c);
 static bool str_equal(const char* start, size_t size, const char* s2);
 
 void path_simplify(char* path)
-{
+{//路径化简
     int size = strlen(path);
 
     char* buf = FT_NEW(char, size);
@@ -40,10 +40,10 @@ void path_simplify(char* path)
 }
 
 static char* str_next(char* s, char c)
-{
+{//传入path ‘/’
     if (*s == c) {
         s++;
-    }
+    }//如果遇见'/'地址右移
 
     while (*s != '\0') {
         if (*s == c) {
@@ -70,19 +70,16 @@ static bool str_equal(const char* start, size_t size, const char* s2)
 
 void path_dirname(const char* path, char* dir)
 {
-    strcpy(dir, path);
-    int src_size = strlen(path);
-
+    strcpy(dir, path);//后者复制到前者
+    int src_size = strlen(path);//path长度
     bool is_abs = (dir[0] == '/');
-
-    for (int i = src_size - 1; i >= 0; i--) {
+    for (int i = src_size - 1; i >= 0; i--) {//从后往前扫描
         if (dir[i] == '/') {
-
             /* 绝对路径的情况下，/的上级还是/，/xxx 的上级是/ */
             if (is_abs && i == 0) {
                 dir[i + 1] = '\0';
-                return;
-            } else {
+                return;//返回 ’\‘
+            } else {//否则把斜杠删除
                 dir[i] = '\0';
                 return;
             }
@@ -90,13 +87,13 @@ void path_dirname(const char* path, char* dir)
     }
 
     /* 能走到这儿的肯定是相对路径 */
-    dir[0] = '\0';
+    dir[0] = '\0';//相对路径前边没有’/‘
 }
 
 void path_basename(const char* path, char* name, size_t size)
 {
     const char* p_name = path_p_basename(path);
-    strncpy(name, p_name, size);
+    strncpy(name, p_name, size);//p开始size个字节复制到那么
     name[size] = '\0';
 }
 
@@ -116,8 +113,9 @@ const char* path_p_basename(const char* path)
 }
 
 char* path_join(char* path1, size_t size, const char* path)
+//链接路径
 {
-    size_t top = 0;
+    size_t top = 0;//循环寻找顶部
     while (path1[top] != '\0') {
         top++;
     }
@@ -129,7 +127,7 @@ char* path_join(char* path1, size_t size, const char* path)
 
         path1[top] = '/';
         top++;
-        path1[top + 1] = '\0';
+        path1[top + 1] = '\0';//结束
     }
 
     strncpy(path1 + top, path, size - top - 1);
