@@ -86,7 +86,7 @@ int create(const char* path, size_t size)
 int format(const char* path, const char* type, int block_size)
 {
     int fs_type;
-    if (strcmp(type, "fulfs") == 0) {
+    if (strcmp(type, "fulfs") == 0) {//暂时支持这一种文件系统
         fs_type = FS_TYPE_FULFS;
     } else {
         printf("未知的文件系统类型。。。\n");
@@ -94,7 +94,6 @@ int format(const char* path, const char* type, int block_size)
     }
     // 测试
     int device = device_add(path);//设备号
-    printf("%d 2018年07月05日14:22:27",device);
     if (!DEVICE_IO_SUCCESS(device)) {
         //句柄为-1则报错
         printf("设备挂载失败。。。\n");
@@ -110,7 +109,8 @@ int format(const char* path, const char* type, int block_size)
     }
 
     if (fs_format(device, sectors_per_block, fs_type) != FS_SUCCESS) {
-        //设备号0
+        //format()-->fs_format-->fulfs_format
+        //
         printf("格式化失败。。。\n");
         device_del(device);
         return ERROR;
@@ -157,6 +157,7 @@ int enter(void)
         }
 
         if (!fs_mount(device, drive_letter, FS_TYPE_FULFS)) {
+            //暂时挂载Filesystem Unix Like File System
             printf("挂载失败：盘号%c 容器文件%s\n", drive_letter, path);
             continue;
         }
@@ -164,6 +165,7 @@ int enter(void)
         printf("挂载成功：盘号%c 容器文件%s\n", drive_letter, path);
     }
     fclose(fp);
+    //这句话应该在底层操作
 
 
 

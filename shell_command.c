@@ -3,6 +3,8 @@
 #include <string.h>
 #include "utils/path.h"
 #include "utils/sys.h"
+#include "fulfs/superblock.h"
+#include  "fulfs/block.h"
 /*
 int cmd_pwd(int argc, char* argv[])
 {
@@ -132,7 +134,9 @@ int cmd_createfile(int argc, char* argv[])
     }
 
     int fd = fs_open(argv[0]);
+    //打开文件时产生文件标识符
     fs_write(fd, argv[1], strlen(argv[1]));
+    //传入参数 文件标识符 文件内容 文件长度
     fs_close(fd);
 
     return 0;
@@ -145,8 +149,8 @@ int cmd_cat(int argc, char* argv[])
         return -1;
     }
 
-    struct fs_stat st;
-    int ret = fs_stat(argv[0], &st);
+    struct fs_stat st;//获取文件系统
+    int ret = fs_stat(argv[0], &st);//获取文件信息 st
     if(ret != FS_SUCCESS) {
         printf("文件不存在！\n");
         return -1;
@@ -186,15 +190,27 @@ int cmd_df(int argc, char* argv[])
             printf("%d\t", ctrl.device);
 
             printf("%s\t", ctrl.fs_type == FS_TYPE_FULFS ? "fulfs" : "未知");
-
+            //暂时支持FS_TYPE_FULFS
             size_t size;
             char sym = ft_human_size((size_t)fs_filesystem_used_size(i + 'a'), &size);
             printf("%d%c\t", (int)size, sym);
 
             sym = ft_human_size((size_t)fs_filesystem_total_size(i + 'a'), &size);
             printf("%d%c\t", (int)size, sym);
-
             printf("\n");
+            /*加载sb*/
+            superblock_t  sb;
+            superblock_load(ctrl.device,&sb);//读出sb
+            printf("根i\t扇/簇\t起始簇\t已用簇\t已用i\n");
+            printf("%d\t",sb.root_dir);
+            printf("%d\t",sb.sectors_per_block);
+        //    printf("%d\t",sb.data_block_free_stack);//空闲块管理相关
+            printf("%d\t",sb.data_block);//起始区的block号；
+            printf("%d\t",sb.used_data_block_count);
+            printf("%d\t",sb.used_inode_count);
+            printf("\n");
+            data_block_print(ctrl.device,sb.sectors_per_block,sb.data_block_free_stack,sb.data_block_free_stack);
+
         }
     }
     return 0;
@@ -214,9 +230,9 @@ int cmd_cd(int argc, char* argv[])
 {
 	if(argc !=1){
 	   printf("输入格式错误");
-	   return -1; 
+	   return -1;
    }
-   int a = fs_chdir(argv[0]); 
+   int a = fs_chdir(argv[0]);
    if(a == -1){
 	   printf("改变目录失败\n");
 	   return -1;
@@ -229,17 +245,16 @@ int cmd_ls(int argc, char* argv[])
 	if(argc == 0){
 		char path[FS_MAX_FILE_PATH];
 	    fs_getcwd(path,FS_MAX_FILE_PATH);
-        //全局变量（当前地址)送入path
-        //当前目录
+        //当前目录带盘符
 		FS_DIR* dir  =  fs_opendir(path);
-        //打开当权目录
+        //打开当前目录
     if (dir == NULL){
         printf("路径名无效\n");
         return -1;
     }
 		char name[100] = "no";
         for(int i = 0;name[0] != '\0';i++){
-	       fs_readdir(dir, name);
+	       fs_readdir(dir, name);//文件夹和n
            printf("%s ",name);
         }
         printf("\n");
@@ -257,7 +272,7 @@ int cmd_ls(int argc, char* argv[])
    char name[100]="no";
    for(int i = 0;name[0] != '\0';i++){
 	  fs_readdir(dir, name);
-      printf("%s ",name);	  
+      printf("%s ",name);
    }
    printf("\n");
     return 0;
@@ -277,12 +292,12 @@ int cmd_mkdir(int argc, char* argv[])
 int cmd_rmdir(int argc, char* argv[])
 {
 	struct fs_stat st;
-	int ret = fs_stat(argv[0], &st);
+	int ret = fs_stat(argv[0], &st);//传回文件的统计信息
 	if(ret == -1){
 		printf("目录不存在");
 		return -1;
 	}
-	
+
 	else if (st.st_mode == FS_S_IFDIR) {
 		fs_rmdir(argv[0]);
 	}
@@ -394,7 +409,7 @@ int cmd_rm(int argc, char* argv[])
 {
     int isSuccessed;
     for(int i =0;i<argc;i++)
-    {
+    {//命令处理
             isSuccessed =  fs_unlink(argv[i]);
             if(isSuccessed == FS_ERROR)
             {

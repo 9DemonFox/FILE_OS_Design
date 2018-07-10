@@ -6,6 +6,7 @@
 #include"utils/sys.h"
 #include"utils/log.h"
 
+
 struct _device_s{
 //设备包括 路径 文件指针 扇区数目
 // 将文件虚拟成设备
@@ -105,7 +106,7 @@ int device_write(device_handle_t handle, sector_no_t sector_no, int count, const
 
 
     size_t offset = sector_no * BYTES_PER_SECTOR;
-
+    //计算偏移地址
     if (!(sector_no + count <= device->section_count)) {
         count = device->section_count - sector_no;
     }
@@ -125,7 +126,7 @@ int device_write(device_handle_t handle, sector_no_t sector_no, int count, const
 }
 
 int device_section_count(device_handle_t handle)
-{
+{//返回设备的扇区计数
     struct _device_s* device = handle_to_struct(handle);
     if (device == NULL) {
         return 0;

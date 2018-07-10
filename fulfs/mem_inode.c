@@ -15,7 +15,7 @@ static struct {
     //可能多个指向一个
     bool is_free;//状态位 是否为空
 }mem_inodes[MAX_MEM_INODE_COUNT];
-
+//最大的内存节点
 static bool mem_inodes_inited = false;//内存节点初始化标志
 
 
@@ -27,25 +27,24 @@ bool mem_inode_get(dev_inode_ctrl_t* dev_inode_ctrl, inode_no_t inode_no, mem_in
 //返回数组 因为可能不止一个节点储存
 //获取所有空闲节点
 {//获得存储数据的memory节点 //返回数组
-    if (!mem_inodes_inited) {
+    if (!mem_inodes_inited) {//开机时对mem_node初始化
         mem_inodes_init();
         mem_inodes_inited = true;
     }
-    
-    for (int i = 0; i < MAX_MEM_INODE_COUNT; i++) {
-        //扫描获取所有相关节点
-        //算法有待改进
+
+ /*   for (int i = 0; i < MAX_MEM_INODE_COUNT; i++) {//将inode读取到inode的缓冲区
         mem_inode_t* mem_inode = &(mem_inodes[i].mem_inode);
         if (!mem_inodes[i].is_free &&
             mem_inode->device == dev_inode_ctrl->device && mem_inode->inode_no == inode_no) {
-            //如果满足上述条件，则获取结果
-            *p_result = mem_inode;
+            *p_result = mem_inode;//如果找到一个mem节点则返回结果
         }
     }
-
-    int i = mem_inode_read(dev_inode_ctrl, inode_no);
-
+*/
+    //如果缓冲区没有结果
+    int i = mem_inode_read(dev_inode_ctrl, inode_no);//从设备中读取mem_inode
+    //则从文件中加载
     if (i != READ_ERROR) {
+        //结果为初始化的mem_inodes
         *p_result = &(mem_inodes[i].mem_inode);
     } else {
         return false;
@@ -81,8 +80,8 @@ bool mem_inode_put(dev_inode_ctrl_t* dev_inode_ctrl, mem_inode_t* mem_inode)
 
 static int mem_inode_read(dev_inode_ctrl_t* dev_inode_ctrl, inode_no_t inode_no)
 {
-    for (int i = 0; i < MAX_MEM_INODE_COUNT; i++) {//将所有的mem_inode[i]传过来
-        if (mem_inodes[i].is_free) {//找到空闲的内存块
+    for (int i = 0; i < MAX_MEM_INODE_COUNT; i++) {
+        if (mem_inodes[i].is_free) {//当前块空闲
             bool success = inode_load(dev_inode_ctrl, inode_no, &(mem_inodes[i].mem_inode.inode));
             if (!success) {//成功后分配出来
                 return READ_ERROR;
@@ -90,7 +89,7 @@ static int mem_inode_read(dev_inode_ctrl_t* dev_inode_ctrl, inode_no_t inode_no)
 
             mem_inodes[i].is_free = false;//置状态位为占用
             mem_inodes[i].mem_inode.inode_no = inode_no;
-            mem_inodes[i].mem_inode.ref_count = 0;
+            mem_inodes[i].mem_inode.ref_count = 0;//初始化引用0
             mem_inodes[i].mem_inode.device = dev_inode_ctrl->device;
             return i;//返回存放的i节点
         }

@@ -24,6 +24,7 @@ typedef struct {
 typedef struct
 {
     uint16_t mode;
+    //inode的模式 0表示是未使用
     uint16_t link_count;
     uint64_t size;
     block_no_t blocks[LEVEL_0_INDIRECT_COUNT];//1级索引10块
@@ -34,8 +35,9 @@ typedef struct
     timestamp_t modified_time;
     timestamp_t created_time;
 }inode_t;
+//索引节点信息
 //i节点基本信息 
-
+//每个内存节点存放i节点信息
 enum {
     MODE_EMPTY,
     MODE_FILE,

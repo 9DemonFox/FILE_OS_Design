@@ -29,6 +29,8 @@ static int num_per_indirect(int block_size);
 
 bool base_block_file_locate(device_handle_t device,  superblock_t* sb, inode_t* inode, block_no_t block_relative, block_no_t *p_block)
 {
+    //定位文件块缩写的位置
+    //采用文件的间接索引
     assert(inode->size > 0);
 
     int blocknos_per_block = num_per_indirect(superblock_block_size(sb));
@@ -91,7 +93,7 @@ bool base_block_file_pop_block(device_handle_t device, superblock_t* sb, inode_t
     assert(inode->size > 0);
 
     block_no_t block_count = (inode->size - 1) / superblock_block_size(sb) + 1;
-
+    //计算块数
     int blocknos_per_block = num_per_indirect(superblock_block_size(sb));
     block_no_t level_0_max_block_count = (fsize_t)(LEVEL_0_INDIRECT_COUNT);
     block_no_t level_1_max_block_count = level_0_max_block_count + blocknos_per_block;
@@ -99,11 +101,13 @@ bool base_block_file_pop_block(device_handle_t device, superblock_t* sb, inode_t
     block_no_t level_3_max_block_count = level_2_max_block_count + (blocknos_per_block * blocknos_per_block * blocknos_per_block);
 
     int sectors_per_block = superblock_sectors_per_block(sb);
-    block_no_t data_block_stack = superblock_data_block_free_stack(sb);
+    block_no_t data_block_stack = superblock_data_block_free_stack(sb);//加载空闲块
     if (block_count <= level_0_max_block_count) {
         block_no_t new_block;
-        data_block_free(device, sectors_per_block, data_block_stack, inode->blocks[block_count - 1], &sb->used_data_block_count);
-        return data_block_alloc(device, sectors_per_block, data_block_stack, &new_block, &sb->used_data_block_count);
+        data_block_free(device, sectors_per_block, data_block_stack, inode->blocks[block_count - 1], &sb->used_data_block_count);//释放空间
+        //return data_block_alloc(device, sectors_per_block, data_block_stack, &new_block, &sb->used_data_block_count);
+        //2018年07月10日10:34:22
+        return true;
     } else if (block_count <= level_1_max_block_count) {
         return pop(device, sectors_per_block, data_block_stack,
                    &inode->single_indirect_block, 1, block_count - level_0_max_block_count, &sb->used_data_block_count);

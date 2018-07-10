@@ -47,8 +47,8 @@ typedef fs_filesystem_t* (fs_filesystem_new_f)(device_handle_t device);
 
 typedef void fs_file_t;
 typedef void fs_dir_t;
-//返回类型 空
-//必须要实现一下接口
+
+
 typedef fs_file_t* (fs_open_f)(device_handle_t device, fs_filesystem_t* fs, const char* path);
 //打开文件
 typedef void     (fs_close_f)(fs_file_t* file);

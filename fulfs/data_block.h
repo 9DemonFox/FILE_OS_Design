@@ -11,5 +11,5 @@ bool data_block_alloc(device_handle_t device, int sectors_per_block, block_no_t 
 /* 释放block */
 bool data_block_free(device_handle_t device, int sectors_per_block, block_no_t data_blocks_stack, block_no_t block, block_no_t *p_used_block_count);
 
-
+bool data_block_print(device_handle_t device,int sectors_per_block,block_no_t data_block_begin,block_no_t data_blocks_stack);
 #endif /* __FULFS_DATA_BLOCK__H__ */

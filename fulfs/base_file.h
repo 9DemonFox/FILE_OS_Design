@@ -10,7 +10,7 @@
 typedef struct {
     device_handle_t device;//句柄
     inode_no_t inode_no;//i节点
-    mem_inode_t* mem_inode;//内存节点
+    mem_inode_t* mem_inode;
     superblock_t* sb;//超级块
     /* 储存内部指针的底层信息 */
     struct {

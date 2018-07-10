@@ -14,7 +14,7 @@ size_t superblock_bin_size(void)
 
 /* NOTE:目前的实现并未考虑太多的通用性，包括内存布局和字节序 */
 void superblock_dump_to_bin(superblock_t* sb, char* bin, size_t bin_size)
-//sb超级块 
+//sb超级块
 {
     assert(bin_size >= superblock_bin_size());
 
@@ -29,7 +29,7 @@ void superblock_load_from_bin(const char* bin, superblock_t* sb)
 }
 
 void superblock_create(superblock_t* sb, sector_no_t sectors, int sectors_per_block,
-                       block_no_t inode_table, inode_no_t inode_count, 
+                       block_no_t inode_table, inode_no_t inode_count,
                        block_no_t data_block, block_no_t data_block_free_stack, inode_no_t root_inode)
 {
     sb->sectors = sectors;
@@ -67,7 +67,7 @@ bool superblock_dump(device_handle_t device, superblock_t* sb)
 {
     char buf[512];
     superblock_dump_to_bin(sb, buf, sizeof(buf));
-    //超级块 缓冲区 大小 
+    //超级块 缓冲区 大小
     //变为合适的大小
     return DEVICE_IO_SUCCESS(device_write(device, 0, 1, buf));
 }
@@ -155,7 +155,7 @@ void superblock_data_block_free_stack_set(superblock_t* sb, block_no_t new_stack
 }
 
 size_t superblock_block_size(const superblock_t* sb)
-{
+{//每一个簇的大小
     return sb->sectors_per_block * BYTES_PER_SECTOR;
 }
 

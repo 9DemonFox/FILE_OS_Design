@@ -1,151 +1,125 @@
-* 简单介绍
-这是我的操作系统课程设计。题目是要求实现类 unix 文件系统，并且：
-  - 采用索引节点储存文件系统。根据课本的解释，索引节点储存另外文件控制块 FCB 中除文件名之外的内容。
-  - 采用混合分配方式组织文件数据。
-  - 采用成组链接法管理空闲的数据块。
+* 知识笔记
+    ** 1 
+     尝试使用enum{
+        name_1;
+        name_2;
+        name_3;
+        }
+     来对程序中的一些层次进行比较。
 
-    
-* 程序功能设计
-在开始设计程序时，就考虑到的特性：
-** 抽象磁盘
-程序能够在多种抽象磁盘上建立文件系统。其中，抽象磁盘可以是：
-- 真正的磁盘
-- 主操作系统中的一个大文件
-  但是实际上，任何能够看成一系列扇区组合的并且支持对某个扇区进行读写操作的对象，都能视为抽象磁盘，从而基于此建构整个文件系统。
-  
-   
-** 多文件系统挂载支持
-程序能够将不同的磁盘挂载到不同盘符（类似 Windows 系统的盘符），在通过路径操作文件时，程序能自动根据盘符识别具体的文件系统类型，从而执行对应的操作。
-一个磁盘可以格式化为一个文件系统，一个磁盘可以挂载到一个盘符。程序支持多种文件系统，如：
-- FAT32
-- ext3
-- ext4
-- fulfs
-  由于此课程设计的目标是实现类 unix 文件系统（在这次课程设计里将其命名为 fulfs），因此实际上只实现了 fulfs。
-  但是理论上能够进行方便的扩展支持其它的各种文件系统。
+* 笔记
+    用面向对象的方法解释
+* main()
+ ** fs_init() 初始化文件设备到文件系统的 类
+     *** 类的方法包括 文件系统所实现的通用接口
+     *** 类的属性包括 文件系统的类别 用enum列出，检测
+ ** FIXME 通过预处理把FULFS和文件系统接合    
+ 
+ ** 创建虚拟磁盘 
+    main()//命令解析
+    |- create()//输出错误信息
+    |--ft_create()/系统调用
 
-** 通用的 API
-由于第 2 点的设计需要，程序必须提供一组抽象的接口用于根据文件路径来操作文件系统而不用关心文件系统的具体类型。
-因此，程序封装了一组接口，并且为了对使用者友好，其接口形式尽量模仿了 linux 系统调用。
+ ** 格式化虚拟磁盘
+    main()//命令解析
+    |- format()//检验基本信息（文件系统名字，分配块大小）
+    |- fs_format()//检查文件系统是否在支持的文件系统类别中
+    |- fulfs_format()
+        |- dev_inode_ctrl_init()
+        |- inode_dump()
+        |- data_blocks_init(&data_block_free_stack)//文件管理中超级块，即栈
+            |-group()//成组链接分配方法
+                |-group_dump()//写入缓冲区
+                    |-block_write()//块操作
+                        |-DEVICE_IO()//磁盘IO，只处理IO
+        |- superblock_create(&sb)//创建sb
+        |- base_file_create(sb)//写入sb
+    -|
+ ** 文件系统层
+    main()//命令解析
+    |-enter()//解析配置文件，将设备挂载到盘符
+        ** FIXME 暂时挂载盘符A
+    |-shell_main()//进入文件系统shell层
+* shell_main()//命令解析成 命令参数个数 命令参数
+    |-cmd_dispatch()//命令查询
+         |-ls 显示当前目录项
+         |-
+ ** ls
+            |-cmd_ls()//
+                |-fs_opendir(path)
+                    |-fulfs_opendir()
+                        |-base_file_open()//文件夹也是文件
+                            |-mem_inode_get()//inode缓存数组
+                                |-
+ ** mkdir   
+            |-cmd_mkdir()//简单参数校验
+                |-fs_mkdir()//获取绝对路径
+                    |-fulfs_mkdir();
+                        |-path_basename(&name);//获取文件名字
+                        |-path_dirname(&dir_path);//文件夹的路径
+                        |-dir_roottree_locate(&exist,&dir_no);
+                            |-dir_tree_locate(&exist,&dir_no);
+                                |-base_file_open(&base_file,&fs->sb,dir);
+                        |-dir_locate(dir_no,&exist,&file_no)//返回i节点编号
+                            |-base_file_open(&base_file);
+                        |-base_file_create(MODE_DIR，&file_no);创建一个空闲文件
+                            |-修改inode的信息，变为占用
+                            |-修改超级块已经使用的inode数目
+                            |-superblock_dump(device, sb);
+                            |-inode_dump();写入i节点
+                                |-inode_no_to_block_no_and_offset(dev_inode_ctrl, no, &block_no, &offset);
+                                |-block_read(&buff);//读出整块
+                                |-把inode添加到buff
+                                |-block_write(buff)//写入整块
+                        |-dir_add();
+                            |-base_file_close();
+                                |-superblock_dump();
+                                |-base_file_open(&base_file);
+                                    |-mem_inode_get(&dev_inode_ctrl,inode_no,&(base_file->mem_node))//获取inode所存放的信息
 
-** 易用的 shell
-4. 提供了一个 shell 用于操作挂载的文件系统。shell 的命令都是仿照 linux 的，像 ls, mv, cd 等。
+* 系统层次即方法
+* 反复调用的函数
+ ** fs_stat(name,&fs_stat))
+    |-根据name获取绝对路径
+    |-fulfs_stat(device,fs_ctrl,path_remain(abspath),&fs_stat)
+        |-dir_roottree_locate(device,fs,path,&exit,i_node_type &no)
+            |-去除根目录 ‘/'
+            |-superblock_root_dir_inode(&fs->sb)//定位到根目录的i节点
+            |-dir_tree_locate(device, fs, inode(0), relative_path, &p_exist, &p_no);//在根目录寻找
+                 |-获取下一级目录名 如test0/test1/则 name=test0
+                 |-dir_locate(device,fs,dir,char* name,&p_exist, inode_no_t &p)//获取目录项
+                    |-base_file_open(&base_file,device,inode_no_t dir)//获取文件信息
+                    |-获取basefile中的信息
+** base_file_open(&base_file,device,&sb,inode_no_t i);
+    |-dev_inode_ctrl_init_from_superblock(&dev_inode_ctrl, device, sb);
+        |-dev_inode_ctrl_init()//
+        |-存i节点的开始
+        |-存i节点的block数目
+        |-
+    |-mem_inode_get(&dev_inode_ctrl, inode_no, &(base_file->mem_inode))
+        |-在存放inode的 mem_inodes数组中找到所有i节点
+        |-mem_inode_read(dev_inode_ctrl, inode_no)
+            |-inode_load(dev_inode_ctrl,no, inode_t* inode)
+                |-inode_no_to_block_no_and_offset(dev_inode_ctrl, no, &block_no, &offset);
+                    |-获取i节点的块数目 block_no
+                    |-块内偏移 offset
+                |-block_read(device, 每块扇区数, block_no, &buf);//读出块到buf
+                    |-device_read(device, no * sectors_per_block, sectors_per_block, buf));//设备层
+                        |-系统调用
+                |-计算获取inode的地址
+    |-完善文件基本信息当前块偏移为0，位置偏移为0
+** dir_locate
+    |base_file_open();
+    |读出所有数据，按照每个目录项大小循环，直到读完目录项
+        |若存在，返回存在标志位，则读出目录项
+        |不存在，则返回不存在
+* mkdir
+    /dir0/dir1/dir2
+    ** 读出根目录
+     *** 查找dir0项
+    ** 读出dir0项查找dir1
+    ** 读出dir1项查找dir2
 
-** 对跨平台的良好支持
-5. 整个程序的实现用到且只用到了 ANSI C 和其标准库，方便源代码级的跨平台。
-   
-** 现代化的文件系统
-fulfs 文件系统功能上包括：
-- 对最基本的文件储存的支持。
-- 对文件，即能够将文件当成流来读写，也能够对文件进行随机读写。
-- 对路径和目录的完整支持。
-- 对硬链接的完整支持。
-- 对符号链接的支持。
-
-* 代码设计
-#+BEGIN_SRC 
-.
-├── CMakeLists.txt cmake 文件
-├── main.c     程序的主入口
-├── test.c     这里是一组测试，在开发时用来测试代码的正确性
-├── shell.h    程序提供的模拟 shell 入口。    
-├── shell.c
-├── shell_command.c
-├── shell_command.h   程序提供的模拟 shell 提供了一组模仿 linux 命令的命令，在这个模块里实现
-├── fs.c
-├── fs.h              这里对应设计图的模拟系统调用层。通过这个模块，即可无视文件系统类型操作文件
-├── fs_def.h          这里定义了各种具体文件系统的实现和 fs.h 模块的约定接口
-├── device_io.c
-├── device_io.h       抽象磁盘。这里把一个大文件虚拟成一个磁盘，赋予一个磁盘号，并以扇区为单位进行读写
-├── fulfs
-│   ├── fulfs.h
-│   ├── filesystem.c
-│   ├── filesystem.h  对 fulfs 文件系统的操作，如格式化，查看总空闲和剩余空间等。
-│   ├── file_dir.c
-│   ├── file_dir.h    这里实现了 fulfs 文件系统的普通文件 I/O，目录操作，硬链接以及符号链接
-│   ├── base_file.c   在 fulfs 底层，一切都视为以 inode 编号为标志的底层文件
-│   ├── base_file.h
-│   ├── base_block_file.c 把底层文件成是一个个的盘块组成，提供定位盘块，增加盘块，删除盘块等核心算法。
-│   ├── base_block_file.h
-│   ├── superblock.c
-│   ├── superblock.h      superblock 数据结构的操作和封装。
-│   ├── inode.c
-│   ├── inode.h           inode 节点数据结构的操作
-│   ├── data_block.c
-│   ├── data_block.h      储存数据盘块区的操作，使用成组链接法的核心算法在此
-│   ├── block.h           将抽象磁盘看成一个个 block 组成的块，以 block 为单位进行读写
-│   └── def.h
-├── memory
-│   ├── alloc.c 
-│   └── alloc.h            对动态内存分配的包装
-├── datastruct
-│   ├── string.c
-│   └── string.h           字符串操作的辅助函数
-└── utils
-    ├── log.c
-    ├── log.h           日志功能，方便调试
-    ├── math.h          计算相关的小函数
-    ├── path.c
-    ├── path.h          处理路径的辅助函数
-    ├── sys.c           有几个小函数，通过 ANSI C 标准库给原系统的文件加几个操作
-    ├── sys.h
-    ├── testtools.c
-    └── testtools.h     测试工具
-#+END_SRC
-
-
-
-* 编译以及使用
-** 编译
-#+BEGIN_SRC shell
-mkdir build
-cd build
-cmake ..
-make
-#+END_SRC
-之后，目录中生成 main 文件，为可执行文件。
-
-** 创建及挂载
-使用示例：
-./main create test.fs 32000000
-创建一个大小为 32000000 字节的 test.fs 的文件，之后会将此大文件模拟成磁盘供程序使用。
-
-./main format test.fs fulfs 2048 
-对 test.fs 这个大文件虚拟成的磁盘进行格式化，格式化为 fulfs 文件系统，文件系统盘块大小为 2048.
-
-其中，磁盘的挂载需要写入配置文件 config.txt，如：
-#+BEGIN_SRC 
-A test.fs
-B test2.fs
-#+END_SRC
-这表示，将 test.fs 这个磁盘挂载到盘符 A，将 test2.fs 这个磁盘挂载到盘符 B.
-等进入 shell 后，可以使用前面介绍的命令操作文件系统，这些命令都是仿照 linux 命令格式设计的。
-
-./main help 
-查看使用帮助。
-
-** 使用 shell
-./main enter  
-进入程序的 shell 以操作挂载的磁盘的文件系统。
-
-这个 shell 模仿 linux 的命令实现了部分命令，包括：
-- cd 切换当前目录。
-- pwd 输出当前目录。
-- ls 列出目录中的文件。
-- rmdir 删除空目录。
-- mkdir 创建目录。
-- ln 创建链接，支持硬链接和符号链接。
-- rm 删除文件。
-- cp 复制文件。
-- mv 移动文件。
-- stat 输出文件的信息。
-- df 输出挂载的文件系统的信息。
-
-
-* 最后
-以前总觉得像文件系统实现是遥不可及的事情，
-但是直到自己动手实现一个 demo 才发现原来也没想象中的那么难:joy: 
-
-这个课程设计断断续续的花了我一个月的时间，
-作为我第一个上 5000 行的 C 语言程序，写完之后很累但是也很开心。:smile: 
-
+* 文件的创建
+    ** 目录项的建立即包括文件名字和i节点
+    ** 通过根逐步找到目录项

@@ -14,13 +14,13 @@ bool fulfs_format(device_handle_t device, int sectors_per_block)
 //fulfs系統的初始化 sectors_per_block  1
 {
     block_no_t block_count = device_section_count(device) / sectors_per_block;
-    //总的block数目
+    //计算当前总的簇数
     block_no_t inode_table = 1;//存放inode超级块
     /* inode 所占的簇数 */
     int inode_blocksize =  inode_block_count(sectors_per_block * BYTES_PER_SECTOR, INODE_MAX_COUNT);
     //inode所占的簇数
     block_no_t data_block = inode_table + inode_blocksize;
-    //当前数据区格式化等于簇 第一扇区+inode扇区
+    //当前数据区起始的位置
 
     if (block_count  <= 0 ||
         data_block >= block_count) {
@@ -34,8 +34,9 @@ bool fulfs_format(device_handle_t device, int sectors_per_block)
     dev_inode_ctrl_init(&dev_inode_ctrl, device, sectors_per_block * BYTES_PER_SECTOR, inode_table, inode_blocksize);
     //磁盘控制块信息：设备 每个簇有多少个扇区 开始位置（超级块数目） inode数目
     inode_t inode;//数据结构
-    inode_init(&inode);//初始化i节点 i.mode=0
-
+    inode_init(&inode);
+    //初始化i节点 i.mode=0
+    //mode为0表示没有分配
     for (inode_no_t i = 0; i < INODE_MAX_COUNT; i++) {//写入65535个i节点的信息
         if (!inode_dump(&dev_inode_ctrl, i, &inode)) {//把i节点的数据结构写入超级块 i.mode=0
             log_debug("inode写入失败: %d号设备, %d号inode", device, (int)i);//写入信息失败

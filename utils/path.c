@@ -10,7 +10,7 @@ static char* str_next(char* s, char c);
 static bool str_equal(const char* start, size_t size, const char* s2);
 
 void path_simplify(char* path)
-{//路径化简
+{//路径化简 即是去除 /
     int size = strlen(path);
 
     char* buf = FT_NEW(char, size);
@@ -21,6 +21,7 @@ void path_simplify(char* path)
 
     while (*start != '\0') {
         if (!str_equal(start, end - start, "/.")) {
+            //比较有限字符数
             if (!str_equal(start, end - start, "/..")) {
                 memcpy(top, start, end - start);
                 top += end - start;
@@ -93,7 +94,9 @@ void path_dirname(const char* path, char* dir)
 void path_basename(const char* path, char* name, size_t size)
 {
     const char* p_name = path_p_basename(path);
-    strncpy(name, p_name, size);//p开始size个字节复制到那么
+    strncpy(name, p_name, size);
+    //p开始size个字节复制到那么
+    //赋复制文件名
     name[size] = '\0';
 }
 
@@ -106,10 +109,10 @@ const char* path_p_basename(const char* path)
 
     for (int i = src_size - 1; i >= 0; i--) {
         if (path[i] == '/') {
-            return path + i + 1;
+            return path + i + 1;//返回本级文件名
         }
     }
-    return path;
+    return path;//如果在根目录下，直接返回文件名
 }
 
 char* path_join(char* path1, size_t size, const char* path)

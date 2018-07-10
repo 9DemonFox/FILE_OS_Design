@@ -18,6 +18,9 @@ static int cmd_dispath(const char* cmd, int argc, char* argv[]);
 int shell_main(void)
 {
     fs_chdir("A:/");//根目录 定为A盘 暂定为A盘 未来可改变
+    //传入当前的设备号
+    //FIXME暂时支持A盘
+    //可以扩展
     char line[MAX_LINE];//4*1024命令行最大字节数
 
     char* argv[MAX_ARGC];//申请参数空间
@@ -37,6 +40,7 @@ int shell_main(void)
         size_t size = 0;
         const char* next = line;
         while (((p = ft_string_split_next(next, " ", &size)) != NULL) && argc <= MAX_ARGC) {
+            //命令解析
             argv[argc] = (char* )p;
             ft_str_strip(argv[argc]);
 
