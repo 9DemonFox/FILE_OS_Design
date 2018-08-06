@@ -89,7 +89,7 @@ int cmd_dispath(const char* cmd, int argc, char* argv[])
     };
 
     for (size_t i = 0; i < sizeof(commands) / sizeof(*commands); i++) {
-        if (strcmp(cmd, commands[i].name) == 0) {
+        if (strcmp(cmd, commands[i].name) s== 0) {
             return commands[i].func(argc, argv);
         }//对应的命令去执行
     }

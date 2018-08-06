@@ -143,7 +143,7 @@ int fs_open(const char* path)
             if (file == NULL) {
                 return FS_ERROR;
             }
-            
+
             g_fs_files[fd].file = file;
             g_fs_files[fd].drive_letter = path_drive_letter(abspath);//设备盘符
             return fd;//返回文件标识符
